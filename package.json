@@ -1,0 +1,76 @@
+{
+  "name": "@agility/geo",
+  "version": "0.1.0",
+  "description": "Build, serialize and validate schema.org JSON-LD for Agility CMS pages (GEO/AEO).",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agility/agility-geo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/agility/agility-geo/issues"
+  },
+  "homepage": "https://github.com/agility/agility-geo#readme",
+  "main": "./dist/node.js",
+  "module": "./dist/index.mjs",
+  "browser": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/node.js",
+      "default": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">= 18.0.0"
+  },
+  "scripts": {
+    "clean": "rimraf dist",
+    "build": "node build.js",
+    "typecheck": "tsc --noEmit -p tsconfig.test.json",
+    "prepare": "npm run build",
+    "test": "npm run typecheck && jest"
+  },
+  "keywords": [
+    "typescript",
+    "agility",
+    "cms",
+    "headlesscms",
+    "json-ld",
+    "schema.org",
+    "structured-data",
+    "seo",
+    "geo",
+    "aeo"
+  ],
+  "author": "Agility CMS",
+  "license": "MIT",
+  "dependencies": {},
+  "peerDependencies": {
+    "@agility/content-fetch": ">=2.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@agility/content-fetch": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@agility/content-fetch": "^2.0.11",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^18.19.0",
+    "esbuild": "^0.25.0",
+    "jest": "^29.7.0",
+    "rimraf": "^5.0.10",
+    "ts-jest": "^29.4.0",
+    "typescript": "~5.9.0"
+  }
+}
