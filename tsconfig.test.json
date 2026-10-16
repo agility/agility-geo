@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    "resolveJsonModule": true,
+    "types": ["jest", "node"]
+  },
+  "include": ["src", "test"]
+}
