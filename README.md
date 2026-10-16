@@ -120,7 +120,17 @@ In Agility these settings will come from the `AgilityGeoSettings` content model 
 
 #### Dynamic pages
 
-When you pass `item`, the graph describes that item's page. Only the dynamic page's `schemaType`, robots and `ai.*` apply to it. The dynamic page's `summary` and `structuredData` describe the dynamic page itself, so they are **not** applied to its items (otherwise every item would carry the same summary and JSON-LD). The description is the item's `seo.metaDescription`, and the name is the item's sitemap title.
+When you pass `item`, the graph describes that item's page. Items in a list that backs a dynamic page can carry their own `geo` (same shape as a page's), and the two combine like this:
+
+| Property | Comes from |
+|---|---|
+| `schemaType` | The item's `geo.schemaType`, else the dynamic page's, else the site's default type, else `WebPage`. |
+| `ai.llmsInclude`, `ai.crawl` | Each one separately: the item's value, else the dynamic page's. On an item, `inherit` means "use the dynamic page's". |
+| robots | The item's `seo.robots`, else the dynamic page's. |
+| `summary`, `structuredData` | **The item's own only.** The dynamic page's summary and JSON-LD describe the dynamic page itself, so they are never applied to its items (otherwise every item would carry the same summary and JSON-LD). |
+| description | The item's `geo.summary`, else the item's `seo.metaDescription`. |
+
+So the dynamic page's `schemaType` and `ai.*` act as defaults for all its items, and an item with no `geo` gets exactly those. The name is the item's sitemap title.
 
 ```ts
 buildJsonLd({ page: dynamicPage, item: post, sitemap, url: "https://www.example.com/blog/hello-world" });
@@ -165,7 +175,7 @@ const { valid, errors, warnings } = validateJsonLd(buildJsonLd({ page, url }));
 
 ### Helpers
 
-- `resolvePageGeo({ page, item? })`: the page's effective `schemaType`, `summary`, `description`, `structuredData`, `robots` and `ai` after the dynamic-page rule.
+- `resolvePageGeo({ page, item? })`: the page's effective `schemaType`, `summary`, `description`, `structuredData`, `robots` and `ai` after the dynamic-page rules above.
 - `readGeo(raw)`, `readStructuredData(raw)`: defensive readers for `geo` and `structuredData` (accept objects or JSON strings; return `undefined` for empty or invalid values).
 - `toNodes(jsonLd)`, `mergeNodes(graph, nodes)`: the flatten and merge-by-`@id` steps.
 - `buildSiteNodes(siteSettings, { origin, includeOrganization })`: the Organization and WebSite nodes on their own, with their `@id`s.

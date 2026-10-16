@@ -89,6 +89,11 @@ export interface GeoPage {
 export interface GeoContentItem {
   contentID?: number;
   seo?: GeoSeoProperties | null;
+  /**
+   * The item's own `geo` (items in a list that backs a dynamic page). Same shape as a page's;
+   * the API leaves it out when the item has no GEO data.
+   */
+  geo?: GeoProperties | string | null;
   fields?: { [key: string]: any };
 }
 

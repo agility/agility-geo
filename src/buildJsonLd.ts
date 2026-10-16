@@ -97,8 +97,10 @@ function buildBreadcrumb(
  * earlier one, arrays included; a node with a new `@id` is added):
  * 1. Organization and WebSite from `siteSettings` (see `buildSiteNodes`).
  * 2. The WebPage node (`@type` from `geo.schemaType`, else the site's `defaultSchemaType`, else
- *    `WebPage`), and a BreadcrumbList when a sitemap is given.
- * 3. The page's `geo.structuredData`. Not applied when rendering an item on a dynamic page.
+ *    `WebPage`; for an item, the item's `geo.schemaType` comes first), and a BreadcrumbList when
+ *    a sitemap is given.
+ * 3. `geo.structuredData`: the page's, or, when rendering an item on a dynamic page, the item's
+ *    own only (the dynamic page's JSON-LD is never applied to its items).
  * 4. `transform(graph, ctx)`.
  *
  * Serialize the result with `serializeJsonLd`, never with plain `JSON.stringify`.
@@ -148,7 +150,7 @@ export function buildJsonLd(options: BuildJsonLdOptions): JsonLdDocument {
   }
 
   // Extension point: model mappings (the item's entity, Phase 3) merge in here, before the
-  // page's structured data.
+  // editor's structured data.
 
   if (geo.structuredData) graph = mergeNodes(graph, toNodes(geo.structuredData));
 

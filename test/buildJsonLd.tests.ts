@@ -187,7 +187,7 @@ describe("buildJsonLd: merging structuredData by @id", () => {
   });
 });
 
-describe("buildJsonLd: dynamic pages (Phase 1 rule)", () => {
+describe("buildJsonLd: dynamic pages, item with no geo of its own", () => {
   const dynamicPage = basePage({
     pageID: 21,
     title: "Blog post",
@@ -242,6 +242,102 @@ describe("buildJsonLd: dynamic pages (Phase 1 rule)", () => {
     const graph = buildJsonLd({ page: dynamicPage, item, url, sitemap })["@graph"];
     const [breadcrumb] = byType(graph, "BreadcrumbList");
     expect((breadcrumb.itemListElement as JsonLdNode[]).map((step) => step.name)).toEqual(["Blog", "Hello World"]);
+  });
+});
+
+describe("buildJsonLd: dynamic pages, item with its own geo (MVP rule)", () => {
+  // The plan's example: /blog is a BlogPosting page that blocks AI crawlers and has its own
+  // summary and JSON-LD.
+  const dynamicPage = basePage({
+    pageID: 21,
+    title: "Blog post",
+    path: "/resources/blog/blog-post-details",
+    pageType: "dynamic",
+    seo: { metaDescription: "The template's description.", robots: { index: true, follow: true } },
+    geo: {
+      schemaType: "BlogPosting",
+      summary: "News from Agility",
+      structuredData: { "@type": "Thing", "@id": "#template-only", name: "Template JSON-LD" },
+      ai: { llmsInclude: "exclude", crawl: "block" },
+    },
+  });
+  const url = "https://www.example.com/resources/blog/hello-world";
+  const resolved = (item: GeoContentItem) => {
+    let seen: any;
+    buildJsonLd({ page: dynamicPage, item, url, transform: (_graph, ctx) => void (seen = ctx.geo) });
+    return seen;
+  };
+
+  it("uses the item's own summary and JSON-LD, never the page's, with the page's type and ai.* as defaults", () => {
+    const item: GeoContentItem = {
+      contentID: 99,
+      seo: { metaDescription: "The item's meta description." },
+      geo: {
+        summary: "The post's own summary.",
+        structuredData: { "@type": "BlogPosting", "@id": "#post", headline: "Hello World" },
+      },
+    };
+    const graph = buildJsonLd({ page: dynamicPage, item, url, sitemap })["@graph"];
+    const [webPage] = graph;
+    expect(webPage["@type"]).toBe("BlogPosting");
+    expect(webPage.description).toBe("The post's own summary.");
+    expect(byId(graph, "#post")).toEqual([{ "@type": "BlogPosting", "@id": "#post", headline: "Hello World" }]);
+    expect(byId(graph, "#template-only")).toHaveLength(0);
+    expect(resolved(item)).toEqual({
+      schemaType: "BlogPosting",
+      summary: "The post's own summary.",
+      description: "The post's own summary.",
+      structuredData: { "@type": "BlogPosting", "@id": "#post", headline: "Hello World" },
+      robots: { index: true, follow: true },
+      ai: { llmsInclude: "exclude", crawl: "block" },
+    });
+  });
+
+  it("lets the item override schemaType and each ai.* property independently", () => {
+    const item: GeoContentItem = { contentID: 99, geo: { schemaType: "Article", ai: { crawl: "inherit", llmsInclude: "include" } } };
+    const [webPage] = buildJsonLd({ page: dynamicPage, item, url })["@graph"];
+    expect(webPage["@type"]).toBe("Article");
+    // crawl: "inherit" on the item means "use the dynamic page's".
+    expect(resolved(item).ai).toEqual({ llmsInclude: "include", crawl: "block" });
+  });
+
+  it("falls back to the item's meta description, never the page's summary, when the item has no summary", () => {
+    const item: GeoContentItem = { contentID: 99, seo: { metaDescription: "The item's meta description." }, geo: { schemaType: "Article" } };
+    const [webPage] = buildJsonLd({ page: dynamicPage, item, url })["@graph"];
+    expect(webPage.description).toBe("The item's meta description.");
+    expect(resolved(item).summary).toBeUndefined();
+  });
+
+  it("reads item geo delivered as a JSON string, and ignores invalid or empty item geo", () => {
+    const fromString = resolved({ contentID: 1, geo: JSON.stringify({ schemaType: "Article", summary: "S" }) });
+    expect(fromString.schemaType).toBe("Article");
+    expect(fromString.description).toBe("S");
+    for (const geo of ["", "null", "{not json", null, {}]) {
+      const r = resolved({ contentID: 1, seo: { metaDescription: "M" }, geo: geo as any });
+      expect(r).toEqual({
+        schemaType: "BlogPosting",
+        description: "M",
+        robots: { index: true, follow: true },
+        ai: { llmsInclude: "exclude", crawl: "block" },
+      });
+    }
+  });
+
+  it("ignores an invalid item schemaType and keeps the page's", () => {
+    expect(resolved({ contentID: 1, geo: { schemaType: "not a type" } }).schemaType).toBe("BlogPosting");
+  });
+
+  it("uses the item's robots over the page's", () => {
+    const item: GeoContentItem = { contentID: 1, seo: { robots: { index: false, follow: false } } };
+    expect(resolved(item).robots).toEqual({ index: false, follow: false });
+  });
+
+  it("falls back to the site's default type, then WebPage, when neither item nor page sets one", () => {
+    const page = basePage({ pageType: "dynamic" });
+    const item: GeoContentItem = { contentID: 1, geo: { summary: "S" } };
+    expect(buildJsonLd({ page, item, url })["@graph"][0]["@type"]).toBe("WebPage");
+    const withDefault = buildJsonLd({ page, item, url, siteSettings: { defaultSchemaType: "Article" } });
+    expect(withDefault["@graph"][0]["@type"]).toBe("Article");
   });
 });
 

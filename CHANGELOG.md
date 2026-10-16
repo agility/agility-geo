@@ -12,7 +12,10 @@ All notable changes to this package are documented here. The format follows
 - `buildJsonLd()`: one schema.org `@graph` per page. A WebPage node typed by `geo.schemaType`,
   a BreadcrumbList from a flat sitemap, the editor's `geo.structuredData` merged in by `@id`
   (later properties replace earlier ones, arrays included), and a `transform` hook that runs last.
-  On a dynamic page, only the page's `schemaType`, robots and `ai.*` apply to the item it renders.
+  On a dynamic page, the item's own `geo` is read too: its `schemaType`, robots and each `ai.*`
+  property override the dynamic page's (which act as defaults), and its `summary` and
+  `structuredData` are its own only (the dynamic page's never apply to its items). An item with no
+  summary is described by its `seo.metaDescription`.
 - Site settings in `buildJsonLd()`: Organization and WebSite nodes (with stable `@id`s the WebPage
   references through `publisher` and `isPartOf`), a SearchAction from a search URL, an
   extra-properties JSON escape hatch per node, a default page type, and `organization: "home-only"`.

@@ -44,10 +44,26 @@ export function readStructuredData(raw: unknown): JsonLdInput | undefined {
 const LLMS_INCLUDE = ["inherit", "include", "exclude"];
 const CRAWL = ["inherit", "block"];
 
-const readAi = (ai: GeoAiProperties | null | undefined): Required<GeoAiProperties> => ({
-  llmsInclude: ai && LLMS_INCLUDE.indexOf(ai.llmsInclude as string) >= 0 ? ai.llmsInclude! : "inherit",
-  crawl: ai && CRAWL.indexOf(ai.crawl as string) >= 0 ? ai.crawl! : "inherit",
-});
+const aiValue = <T extends string>(ai: unknown, key: keyof GeoAiProperties, allowed: string[]): T | undefined => {
+  if (!isObject(ai)) return undefined;
+  const value = ai[key];
+  return typeof value === "string" && allowed.indexOf(value) >= 0 ? (value as T) : undefined;
+};
+
+/**
+ * Read `ai.*`. Each property is taken from the first source that sets it to something other than
+ * `inherit` (an item's own value, then its dynamic page's), else `inherit`.
+ */
+const readAi = (...sources: unknown[]): Required<GeoAiProperties> => {
+  const pick = <T extends string>(key: keyof GeoAiProperties, allowed: string[]): T => {
+    for (const source of sources) {
+      const value = aiValue<T>(source, key, allowed);
+      if (value && value !== "inherit") return value;
+    }
+    return "inherit" as T;
+  };
+  return { llmsInclude: pick("llmsInclude", LLMS_INCLUDE), crawl: pick("crawl", CRAWL) };
+};
 
 /** A schema.org type name: letters and digits, starting with a capital. */
 const TYPE_NAME = /^[A-Z][A-Za-z0-9]*$/;
@@ -59,10 +75,13 @@ const TYPE_NAME = /^[A-Z][A-Za-z0-9]*$/;
  *
  * - **A page:** everything comes from the page. The description is `geo.summary`, falling back to
  *   `seo.metaDescription`.
- * - **An item on a dynamic page (Phase 1 rule):** only `schemaType`, robots and `ai.*` come from
- *   the dynamic page. The page's `summary` and `structuredData` describe the dynamic page itself,
- *   so they are **not** applied to its items, and the description is the item's
- *   `seo.metaDescription`.
+ * - **An item on a dynamic page:** `schemaType`, robots (`seo.robots`) and each `ai.*` property
+ *   are the item's own value when it sets one, else the dynamic page's (the page's value is the
+ *   default for all its items; an `ai.*` value of `inherit` counts as not set). `summary` and
+ *   `structuredData` are the **item's own only**: the dynamic page's describe the dynamic page
+ *   itself, so they are never applied to its items. The description is the item's `geo.summary`,
+ *   falling back to the item's `seo.metaDescription`. An item with no `geo` gets exactly the
+ *   dynamic page's `schemaType`, robots and `ai.*`, and its `seo.metaDescription`.
  */
 export function resolvePageGeo({
   page,
@@ -75,32 +94,33 @@ export function resolvePageGeo({
   defaultSchemaType?: string | null;
 }): ResolvedGeo {
   const geo = readGeo(page.geo) ?? {};
+  const itemGeo = item ? readGeo(item.geo) ?? {} : undefined;
   const validType = (value: unknown) => {
     const type = nonEmpty(value);
     return type && TYPE_NAME.test(type) ? type : undefined;
   };
 
   const resolved: ResolvedGeo = {
-    schemaType: validType(geo.schemaType) ?? validType(defaultSchemaType) ?? "WebPage",
-    ai: readAi(isObject(geo.ai) ? (geo.ai as GeoAiProperties) : undefined),
+    schemaType:
+      validType(itemGeo?.schemaType) ?? validType(geo.schemaType) ?? validType(defaultSchemaType) ?? "WebPage",
+    ai: readAi(itemGeo?.ai, geo.ai),
   };
 
-  const robots = page.seo?.robots;
+  const robots = isObject(item?.seo?.robots) ? item!.seo!.robots : page.seo?.robots;
   if (isObject(robots)) resolved.robots = { ...robots };
 
-  if (item) {
-    const description = nonEmpty(item.seo?.metaDescription);
-    if (description) resolved.description = description;
-    return resolved;
-  }
+  // An item's summary and JSON-LD are its own; the dynamic page's never flow to its items.
+  const source: { geo: GeoProperties; seo?: GeoPage["seo"] } = itemGeo
+    ? { geo: itemGeo, seo: item!.seo }
+    : { geo, seo: page.seo };
 
-  const summary = nonEmpty(geo.summary);
+  const summary = nonEmpty(source.geo.summary);
   if (summary) resolved.summary = summary;
 
-  const description = summary ?? nonEmpty(page.seo?.metaDescription);
+  const description = summary ?? nonEmpty(source.seo?.metaDescription);
   if (description) resolved.description = description;
 
-  const structuredData = readStructuredData(geo.structuredData);
+  const structuredData = readStructuredData(source.geo.structuredData);
   if (structuredData) resolved.structuredData = structuredData;
 
   return resolved;
