@@ -1,6 +1,6 @@
 {
   "name": "@agility/geo",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Build, serialize and validate schema.org JSON-LD for Agility CMS pages (GEO/AEO).",
   "repository": {
     "type": "git",

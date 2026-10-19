@@ -32,11 +32,21 @@ describe("validateJsonLd: the Content Manager's structured-data contract", () =>
     expect(validateJsonLd(text).value).toBeUndefined();
   });
 
-  it("returns the value but no reason when the error is inside the value", () => {
-    const result = validateJsonLd([{ "@type": "Thing" }, 3]);
-    expect(result.valid).toBe(false);
-    expect(result.reason).toBeUndefined();
-    expect(result.value).toHaveLength(2);
+  it("rejects an error inside the value as not-object, without returning the value", () => {
+    for (const input of [[{ "@type": "Thing" }, 3], [1, 2], { "@graph": [1] }]) {
+      const result = validateJsonLd(input);
+      expect(result).toMatchObject({ valid: false, reason: "not-object" });
+      expect(result.value).toBeUndefined();
+    }
+  });
+
+  it("rejects an empty array, which holds no JSON-LD", () => {
+    for (const input of [[], "[]", " [ ] "]) {
+      const result = validateJsonLd(input);
+      expect(result).toMatchObject({ valid: false, reason: "not-object" });
+      expect(result.errors[0]).toMatchObject({ code: "not-object", path: "$" });
+      expect(result.value).toBeUndefined();
+    }
   });
 });
 
