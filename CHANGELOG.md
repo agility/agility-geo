@@ -6,6 +6,15 @@ All notable changes to this package are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-19
+
+### Changed
+- `validateJsonLd()` rejects an empty array (`[]`, including the JSON string `"[]"`) with
+  `reason: "not-object"`: it holds no JSON-LD.
+- When a block or an `@graph` entry isn't an object, the result now carries `reason: "not-object"`
+  and no `value`, so a caller that stores `value` can't save invalid JSON-LD. In 0.1.0 these returned
+  the value and no reason.
+
 ## [0.1.0] - 2026-10-15
 
 ### Added

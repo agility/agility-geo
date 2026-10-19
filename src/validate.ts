@@ -146,6 +146,10 @@ export function validateJsonLd(json: unknown): JsonLdValidationResult {
     errors.push({ code: "not-object", path: "$", message: "JSON-LD must be an object, or an array of objects." });
     return result({ reason: "not-object" });
   }
+  if (Array.isArray(value) && value.length === 0) {
+    errors.push({ code: "not-object", path: "$", message: "JSON-LD must contain at least one object." });
+    return result({ reason: "not-object" });
+  }
   parsed = value;
 
   // Top-level nodes: each block (an array entry, or the value itself), or the nodes of its @graph.
@@ -166,7 +170,12 @@ export function validateJsonLd(json: unknown): JsonLdValidationResult {
       topLevel.push({ node: block, path });
     }
   }
-  if (errors.length > 0) return result();
+  // Every error so far is a block or @graph entry that isn't an object. Don't hand back a value that
+  // isn't valid JSON-LD: callers that store `value` would save it.
+  if (errors.length > 0) {
+    parsed = undefined;
+    return result({ reason: "not-object" });
+  }
 
   // Unknown types and FAQPage/HowTo, anywhere in the tree.
   const visit = (node: unknown, path: string): void => {
