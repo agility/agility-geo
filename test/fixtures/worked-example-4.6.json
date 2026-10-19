@@ -1,0 +1,80 @@
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": "https://example.com/#organization",
+    "name": "Example Software Inc.",
+    "url": "https://example.com",
+    "foundingDate": "2002",
+    "sameAs": [
+      "https://www.linkedin.com/company/example",
+      "https://github.com/example"
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is a headless CMS?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A headless CMS stores content and delivers it through an API to any front end."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does it work with Next.js?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Official SDKs and starters are available for Next.js."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I manage several sites?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. One instance can hold several sitemaps and locales."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is there an API for writing content?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. The Management API creates and updates content and pages."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How is content delivered?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Through a CDN-backed read API, in JSON."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can editors preview changes?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Preview mode shows unpublished changes on the live site."
+        }
+      }
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Example CMS",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "offers": {
+      "@type": "Offer",
+      "description": "Contact us for pricing",
+      "url": "https://example.com/pricing"
+    }
+  }
+]

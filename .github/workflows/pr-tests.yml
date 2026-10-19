@@ -1,0 +1,42 @@
+name: Run tests on PR
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: ["18", "20", "22", "24"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      # `npm ci` runs `prepare`, which builds dist/.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Smoke-test the built package (require and import)
+        run: |
+          node -e "const g = require('@agility/geo'); if (typeof g.buildJsonLd !== 'function') process.exit(1)"
+          node --input-type=module -e "import { buildJsonLd } from '@agility/geo'; if (typeof buildJsonLd !== 'function') process.exit(1)"
