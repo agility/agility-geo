@@ -6,6 +6,14 @@ All notable changes to this package are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-09
+
+### Fixed
+- A `Page` or `ContentItem` from `@agility/content-fetch` 2.0.14+ (which types `geo` as its own
+  interface) can be passed to `buildJsonLd()` and to `@agility/nextjs/geo` again. `GeoProperties`
+  no longer has an index signature, which no interface can satisfy. Unknown keys from a newer API
+  are still ignored.
+
 ## [0.1.1] - 2026-10-19
 
 ### Changed

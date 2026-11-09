@@ -23,10 +23,15 @@ describe("@agility/content-fetch types", () => {
     const item = { contentID: 1, properties: {} as any, fields: {} } as ContentItem;
     const sitemap = {} as SitemapFlat;
 
-    // A page from an SDK version that already carries `geo`.
-    const withGeo: Page & { geo?: GeoProperties } = { ...page, geo: { schemaType: "WebPage" } };
+    // content-fetch 2.0.14+ types `geo` itself, as its own interface. Passing those objects must
+    // compile; an index signature on GeoProperties broke this in 0.1.1.
+    const withGeo: Page = { ...page, geo: { schemaType: "WebPage", summary: "s", ai: { crawl: "block" } } };
+    const itemWithGeo: ContentItem = { ...item, geo: { summary: "item summary" } };
+    const geoFromSdk: GeoProperties | undefined = withGeo.geo;
 
     expect(buildJsonLd({ page, item, sitemap, url: "https://www.example.com/" })["@graph"]).toHaveLength(1);
     expect(buildJsonLd({ page: withGeo, url: "https://www.example.com/" })["@graph"]).toHaveLength(1);
+    expect(buildJsonLd({ page: withGeo, item: itemWithGeo, url: "https://www.example.com/" })["@graph"]).toHaveLength(1);
+    expect(geoFromSdk?.summary).toBe("s");
   });
 });
