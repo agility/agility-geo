@@ -68,7 +68,9 @@ describe("buildJsonLd: the WebPage node", () => {
   });
 
   it("ignores unknown geo keys and an invalid schemaType", () => {
-    const page = basePage({ geo: { schemaType: "not a type!", somethingNew: { a: 1 } } });
+    // As it arrives from a newer API: a value, not an object literal, so extra keys type-check.
+    const geo = { schemaType: "not a type!", somethingNew: { a: 1 } };
+    const page = basePage({ geo });
     const [webPage] = buildJsonLd({ page, url: URL_ })["@graph"];
     expect(webPage["@type"]).toBe("WebPage");
   });

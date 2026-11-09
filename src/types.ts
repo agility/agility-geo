@@ -42,8 +42,9 @@ export type JsonLdInput = JsonLdNode | JsonLdNode[] | { "@context"?: unknown; "@
 
 /**
  * The page's top-level `geo` object. The API leaves it out when the page has no GEO data, and
- * leaves out each property that isn't set. Unknown keys are allowed and ignored, so a newer API
- * never breaks an older copy of this package.
+ * leaves out each property that isn't set. Unknown keys are ignored, so a newer API never breaks
+ * an older copy of this package. There is no index signature: it would reject the `geo` interface
+ * from `@agility/content-fetch` (an interface never matches an index signature).
  */
 export interface GeoProperties {
   schemaType?: GeoSchemaType | string;
@@ -52,7 +53,6 @@ export interface GeoProperties {
   /** JSON-LD merged into the generated graph by `@id`. */
   structuredData?: JsonLdInput | string | null;
   ai?: GeoAiProperties | null;
-  [key: string]: unknown;
 }
 
 export interface GeoRobots {
